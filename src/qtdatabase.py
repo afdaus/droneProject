@@ -3,7 +3,7 @@ import csv
 import sys
 import threading
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
-from EntityRecognition import EntityRecognition
+# from EntityRecognition import EntityRecognition
 from csv_read_subwindow import CSVReadSubWindow
 
 # Custome function using sqlite3 to import csv  

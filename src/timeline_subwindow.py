@@ -19,7 +19,7 @@ class TimelineSubWindow(QMdiSubWindow):
         self.db_connection = db_connection
         self.table_model = None
         self.event_columns = ['message', 'event']
-        self.event_column = self.get_column_intersection()
+        self.event_column = 'message'
 
     def show_ui(self):
         # set title and geometry

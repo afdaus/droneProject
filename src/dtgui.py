@@ -18,6 +18,7 @@ from qtdatabase import QtDatabase
 from timeline_subwindow import TimelineSubWindow
 from merge_timeline_subwindow import MergeTimelineSubWindow
 from functools import partial
+import shutil
 
 class DtGui(QMainWindow):
 
@@ -26,7 +27,7 @@ class DtGui(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.main_window_title = 'Forensic Timeline Analysis with Rule Based Entity Recognition'
+        self.main_window_title = 'Forensic Timeline Analysis with SIGMA Rule'
         self.database = None
         self.case_name = ''
         self.case_directory = ''
@@ -35,6 +36,7 @@ class DtGui(QMainWindow):
         self.setCentralWidget(self.mdi)
         self.merged_timeline_table_name = 'mergedtimeline'
         self.saved_timeline = self.set_saved_timeline()
+        self.saved_rules = self.set_saved_rules()
         self.init_ui()
         self.signal_receiver.connect(self.timeline_subwindow_trigger)
 
@@ -52,8 +54,25 @@ class DtGui(QMainWindow):
         else :
             with open('./timelines.json', 'w+') as outfile:
                 json.dump(timelines, outfile, indent=4)
+        
+        print("ini timeline ", timelines)
 
         return timelines
+    
+    def set_saved_rules(self):
+        # folder path
+        dir_path = r'/home/daus/Documents/TA/dronetimeline/rules/'
+
+        # list to store files
+        res = []
+
+        # Iterate directory
+        for path in os.listdir(dir_path):
+            # check if current path is a file
+            if os.path.isfile(os.path.join(dir_path, path)):
+                res.append(path)
+        print("ini list item", res)
+        return res
 
     def init_ui(self):
         self.statusBar()
@@ -64,20 +83,25 @@ class DtGui(QMainWindow):
         # File menu
         file_menu = menubar.addMenu('&File')
         file_menu.addAction(self.newcase_action())
+        file_menu.addAction(self.rule_action())
         file_menu.addAction(self.import_action())
         file_menu.addAction(self.exit_action())
 
         # Timeline menu
 
-        timeline_menu = menubar.addMenu('&Timeline')
-        timeline_menu.addAction(self.merge_action())
-        timeline_menu.addAction(self.show_merged_timeline_action())
+        # timeline_menu = menubar.addMenu('&Timeline')
+        # timeline_menu.addAction(self.merge_action())
+        # timeline_menu.addAction(self.show_merged_timeline_action())
         
 
         # saved Timeline Menu
         saved_timeline_menu = menubar.addMenu('&Saved Timeline')
         
         self.saved_timeline_action(saved_timeline_menu)
+
+        list_rules_menu = menubar.addMenu("&Rules")
+        self.saved_rules_action(list_rules_menu)
+
 
         # show main window
         self.setWindowIcon(QtGui.QIcon('../assets/drone.png'))
@@ -103,6 +127,14 @@ class DtGui(QMainWindow):
 
         return newcase_act
 
+    def rule_action(self):
+        rule_act = QAction('&Import Rule', self)
+        rule_act.setShortcut('Ctrl+R')
+        rule_act.setStatusTip('Import Rule')
+        rule_act.triggered.connect(self.open_rule_dialog)
+
+        return rule_act
+
     def import_action(self):
         import_act = QAction('&Import Timeline', self)
         import_act.setShortcut('Ctrl+I')
@@ -122,27 +154,80 @@ class DtGui(QMainWindow):
 
         return exit_act
 
-    # def merge_action(self):
-    #     merge_act = QAction('&Merge Timelines', self)
-    #     merge_act.setShortcut('Ctrl+M')
-    #     merge_act.setStatusTip('Merge timelines')
-    #     merge_act.triggered.connect(self.merge_window_trigger)
+    def open_rule_dialog(self):
+        
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        original, _ = QFileDialog.getOpenFileName(self, "Open file", "", "All Files (*)", options=options)
 
-    #     return merge_act
+       
+        file_name = os.path.basename(original)
 
-    def saved_timeline_action(self, saved_timeline_menu):
+        target = r'/home/daus/Documents/TA/dronetimeline/rules/' + file_name
+        
+        if original:
+            # print("ini drirectory file ", original)
+            # print("test import yaml")
+            # print("ini file name ", file_name)
+            shutil.copyfile(original, target)
+            
 
-        if(self.saved_timeline):
-            for directory in self.saved_timeline:
-                savedmenu = saved_timeline_menu.addMenu(directory)
-                for timeline_name in self.saved_timeline[directory]["timelines"]:
-                    timeline_act = QAction('Open timeline {}'.format(timeline_name), self)
-                    timeline_act.setStatusTip('Show saved timeline')
-                    timeline_act.triggered.connect(partial(self.open_timeline_directly, directory, timeline_name, self.saved_timeline[directory]["timelines"][timeline_name]))
-                    savedmenu.addAction(timeline_act)
-        else : 
-            saved_timeline_menu.addAction(QAction('No Saved timelines', self))
+            # insert timeline to database
+            # table_name = os.path.basename(directory)
+            # table_name = os.path.splitext(table_name)[0]
 
+            # # make sure table name is alphanumeric
+            # table_name = re.sub('[\W_]+', '', table_name)
+
+            # # insert csv file to database
+            # column_names = self.database.insert_csv(self, table_name, directory)
+
+            # # save timeline and its column names
+            # self.timeline_columns[table_name] = column_names
+            
+            # self.input_saved_timeline(table_name, column_names)
+            # self.timeline_subwindow_trigger(table_name, column_names)        
+
+
+
+    def merge_action(self):
+        merge_act = QAction('&Merge Timelines', self)
+        merge_act.setShortcut('Ctrl+M')
+        merge_act.setStatusTip('Merge timelines')
+        merge_act.triggered.connect(self.merge_window_trigger)
+
+        return merge_act
+
+    # def saved_timeline_action(self, saved_timeline_menu):
+
+    #     if(self.saved_timeline):
+    #         for directory in self.saved_timeline:
+    #             savedmenu = saved_timeline_menu.addMenu(directory)
+    #             for timeline_name in self.saved_timeline[directory]["timelines"]:
+    #                 timeline_act = QAction('Open timeline {}'.format(timeline_name), self)
+    #                 timeline_act.setStatusTip('Show saved timeline')
+    #                 timeline_act.triggered.connect(partial(self.open_timeline_directly, directory, timeline_name, self.saved_timeline[directory]["timelines"][timeline_name]))
+    #                 savedmenu.addAction(timeline_act)
+    #     else : 
+    #         saved_timeline_menu.addAction(QAction('No Saved timelines', self))
+
+    def saved_rules_action(self, list_rules_menu):
+        if(self.saved_rules):
+            for item in self.saved_rules:
+                item = item.split(".")[0]
+                savedrules = list_rules_menu.addAction(self.rules_action(item))
+        else:
+            list_rules_menu.addAction(QAction('No Saved Rules', self))
+
+    def rules_action(self, item):
+        menu_name = str(item)
+        rules_act = QAction(menu_name, self)
+        rules_act.triggered.connect(self.test_triggered)
+
+        return rules_act
+
+    def test_triggered(self):
+        print("success triggered")
 
     def saved_timeline_action(self, saved_timeline_menu):
         if(self.saved_timeline):
