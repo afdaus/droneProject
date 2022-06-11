@@ -1,0 +1,16 @@
+title: Attitude Mode
+#id: -
+status: test
+description: When aircrafts enter the attitude mode
+date: 2018/06/15 
+logsource:
+  category: file_event
+  product: windows
+detection:
+  keywords: 
+    - 'aircraft is in attitude mode'
+    - 'so that it will not hover'
+  condition: keywords
+falsepositives:
+  - Unknown
+level: informational
