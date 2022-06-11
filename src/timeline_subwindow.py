@@ -28,6 +28,8 @@ class TimelineSubWindow(QMdiSubWindow):
         self.setWindowTitle(subwindow_title)
         self.setGeometry(60, 60, 600, 400)
 
+        print("ini db Connection ", self.db_connection)
+
         # construct the top level widget and layout
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -36,6 +38,12 @@ class TimelineSubWindow(QMdiSubWindow):
         self.table_model = QSqlTableModel(db=self.db_connection)
         self.table_model.setTable(self.table_name)
         self.table_model.select()
+
+        print("nambah ", self.table_model.hasFeature())
+
+        # for i in self.table_model.record().value("message"):
+        #     print("data ", self.table_model.record(i).value("message"))
+
 
         # define search widget
         search_label = QLabel()

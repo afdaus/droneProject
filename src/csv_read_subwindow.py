@@ -22,8 +22,6 @@ class CSVReadSubWindow(QMdiSubWindow):
         self.progress = None
         self.completed = 0
 
-    
-    
     # Custome function using sqlite3 to import csv  
     def insert_csv_to_db(self, parent, csv_file, table_name, column_names, database_path):
        
@@ -89,7 +87,7 @@ class CSVReadSubWindow(QMdiSubWindow):
         # rule = "weak GPS signal" 
         # query_getData = f"{'SELECT id FROM '}{table_name} WHERE message='Weak GPS signal.' OR message='aircraft is in Attitude mode and hovering may be unstable.' OR message='fly with caution.'" 
         # query_getData = f"{'SELECT id FROM '}{table_name} WHERE message='Weak GPS signal'" 
-        query_getData = f"{'SELECT id FROM '}{table_name} WHERE message='Weak GPS signal. Aircraft is in Attitude mode and hovering may be unstable. Fly with caution.'" 
+        # query_getData = f"{'SELECT id FROM '}{table_name} WHERE message='Weak GPS signal. Aircraft is in Attitude mode and hovering may be unstable. Fly with caution.'" 
 
         # every datas that have been inserted to <list>datas will be inserted in one process
         cur.executemany(query_string, datas)
@@ -98,21 +96,21 @@ class CSVReadSubWindow(QMdiSubWindow):
         print("finished inserting from csv")
         self.progress.setValue(100)
 
-        cur.execute(query_getData)
-        column_ids = cur.fetchall()
+        # cur.execute(query_getData)
+        # column_ids = cur.fetchall()
 
        
-        column_message = "message"
+        # column_message = "message"
 
-        for id in chain.from_iterable(column_ids):
-            query_selectData = f"SELECT message FROM {table_name} WHERE id={str(id)}"
-            cur.execute(query_selectData)
-            string = cur.fetchone()
-            a = string
-            marked_string = f"<b style=""background-color:yellow;""> {} </b>".format(a[0])
-            query_update = f"UPDATE {table_name} SET message='{marked_string}' WHERE id={str(id)}"
-            cur.execute(query_update)
-            con.commit() 
+        # for id in chain.from_iterable(column_ids):
+        #     query_selectData = f"SELECT message FROM {table_name} WHERE id={str(id)}"
+        #     cur.execute(query_selectData)
+        #     string = cur.fetchone()
+        #     a = string
+        #     marked_string = f"<b style=""background-color:yellow;""> {} </b>".format(a[0])
+        #     query_update = f"UPDATE {table_name} SET message='{marked_string}' WHERE id={str(id)}"
+        #     cur.execute(query_update)
+        #     con.commit() 
             
         cur.close()
 

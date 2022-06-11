@@ -39,6 +39,7 @@ class DtGui(QMainWindow):
         self.saved_rules = self.set_saved_rules()
         self.init_ui()
         self.signal_receiver.connect(self.timeline_subwindow_trigger)
+        self.newDirectory = ''
 
 
     def set_saved_timeline(self):
@@ -56,6 +57,7 @@ class DtGui(QMainWindow):
                 json.dump(timelines, outfile, indent=4)
         
         print("ini timeline ", timelines)
+
 
         return timelines
     
@@ -222,12 +224,16 @@ class DtGui(QMainWindow):
     def rules_action(self, item):
         menu_name = str(item)
         rules_act = QAction(menu_name, self)
-        rules_act.triggered.connect(self.test_triggered)
+        rules_act.triggered.connect(lambda: self.read_yml_file(item))
 
         return rules_act
 
-    def test_triggered(self):
-        print("success triggered")
+    def read_yml_file(self, item):
+        if(item):
+            rules = QtDatabase(self.newDirectory)
+            rules.read_yml_rules(item)
+        else:
+            print("No YML File Found")
 
     def saved_timeline_action(self, saved_timeline_menu):
         if(self.saved_timeline):
@@ -265,6 +271,7 @@ class DtGui(QMainWindow):
 
     def open_directory_dialog(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Directory")
+        self.newDirectory = directory
 
         # get database name and database directory
         database_name = os.path.basename(directory)

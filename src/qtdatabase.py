@@ -5,6 +5,7 @@ import threading
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 # from EntityRecognition import EntityRecognition
 from csv_read_subwindow import CSVReadSubWindow
+from read_rules import YMLRead
 
 # Custome function using sqlite3 to import csv  
 
@@ -12,6 +13,7 @@ class QtDatabase(object):
 
     def __init__(self, database_path):
         self.database_path = database_path
+        self.table_name = ''
         self.database_name = f"{os.path.basename(database_path)}{'.db'}"
         self.connection = QSqlDatabase.addDatabase('QSQLITE')
         self.connection.setDatabaseName(self.database_name)
@@ -83,50 +85,61 @@ class QtDatabase(object):
             column_names = next(csv_reader)
             self.create_table(table_name, column_names)
 
+            #getting table name
+            self.table_name = table_name
+
             progress_subwindow = CSVReadSubWindow(csv_file, table_name, column_names, self.database_path)
             progress_subwindow.show_ui()
             
             thread = threading.Thread(target=progress_subwindow.insert_csv_to_db, args=(parent, csv_file, table_name, column_names, self.database_path))
             thread.start()
             return column_names
+    
+    def read_yml_rules(self, item):
+        if(item):
+            print("ini test item ", item)
+            call_yml_function = YMLRead(self.table_name, self.database_path, self.database_name)
+            call_yml_function.read_rules(item)
 
-    def insert_into_merged_timeline(self, selected_columns, merged_timeline_table):
-        # create table merged-timeline
-        column_name_merged_timeline = ['timestamp', 'event', 'source']
-        self.create_table(merged_timeline_table, column_name_merged_timeline)
 
-        # select for each timeline then insert to merged-timeline
-        for timeline_name, column_names in selected_columns.items():
-            # sort column to make sure the order: [timestamp, event]
-            column_sorted = []
-            for column_type, column_name in column_names.items():
-                if column_type == 'timestamp':
-                    if len(column_sorted) > 1:
-                        column_sorted.insert(0, column_name)
-                    else:
-                        column_sorted.append(column_name)
-                elif column_type == 'event':
-                    column_sorted.append(column_name)
-            # build query string
-            column_string = ''
-            comma = ', '
-            column_names_len = len(column_sorted)
+    # def insert_into_merged_timeline(self, selected_columns, merged_timeline_table):
+    #     # create table merged-timeline
+    #     column_name_merged_timeline = ['timestamp', 'event', 'source']
+    #     self.create_table(merged_timeline_table, column_name_merged_timeline)
+
+    #     # select for each timeline then insert to merged-timeline
+    #     for timeline_name, column_names in selected_columns.items():
+    #         # sort column to make sure the order: [timestamp, event]
+    #         column_sorted = []
+    #         for column_type, column_name in column_names.items():
+    #             if column_type == 'timestamp':
+    #                 if len(column_sorted) > 1:
+    #                     column_sorted.insert(0, column_name)
+    #                 else:
+    #                     column_sorted.append(column_name)
+    #             elif column_type == 'event':
+    #                 column_sorted.append(column_name)
+    #         # build query string
+    #         column_string = ''
+    #         comma = ', '
+    #         column_names_len = len(column_sorted)
             
-            # column names
-            for index, column_name in enumerate(column_sorted):
-                if index == column_names_len - 1:
-                    comma = ''
-                column_string += f"{column_name}{comma}"
+    #         # column names
+    #         for index, column_name in enumerate(column_sorted):
+    #             if index == column_names_len - 1:
+    #                 comma = ''
+    #             column_string += f"{column_name}{comma}"
 
-            # select timeline table based on timeline_name
-            select_query = QSqlQuery()
+    #         # select timeline table based on timeline_name
+    #         select_query = QSqlQuery()
 
-            # query string
-            query_string = f"{'SELECT '}{column_string}{' FROM '}{timeline_name}"
-            select_query.exec(query_string)
+    #         # query string
+    #         query_string = f"{'SELECT '}{column_string}{' FROM '}{timeline_name}"
+    #         print("query String ", query_string)
+    #         select_query.exec(query_string)
 
-            # get data and insert
-            while select_query.next():
-                # row = [timestamp, event, source]
-                row = [select_query.value(column_sorted[0]), select_query.value(column_sorted[1]), timeline_name]
-                self.insert_data(merged_timeline_table, column_name_merged_timeline, row)
+    #         # get data and insert
+    #         while select_query.next():
+    #             # row = [timestamp, event, source]
+    #             row = [select_query.value(column_sorted[0]), select_query.value(column_sorted[1]), timeline_name]
+    #             self.insert_data(merged_timeline_table, column_name_merged_timeline, row)
