@@ -134,8 +134,8 @@ dmypy.json
 
 
 .vscode/launch.json
-*.db
-*.csv
+# *.db
+# *.csv
 timelines.json
 *IOB.txt
 /timelines
