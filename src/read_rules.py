@@ -19,7 +19,8 @@ class YMLRead():
             # print("database name ", self.database_name)
             # print("database path", self.database_path)
             query_keyword = ''
-            path = r'/home/daus/Documents/TA/dronetimeline/rules/' + item + '.yml'
+            # path = r'/home/daus/Documents/TA/dronetimeline/rules/' + item + '.yml'
+            path = r'/Users/illank86/Documents/Project/droneProject/rules/' + item + ".yml"
             with open(path, "r") as stream:
                 try:
                     data = yaml.safe_load(stream)

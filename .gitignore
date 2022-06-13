@@ -134,8 +134,10 @@ dmypy.json
 
 
 .vscode/launch.json
-# *.db
-# *.csv
+*.db
+*.csv
+*.yml
+*.DS_Store
 timelines.json
 *IOB.txt
 /timelines

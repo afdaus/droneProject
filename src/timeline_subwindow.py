@@ -12,6 +12,7 @@ from PyQt5.QtSql import QSqlTableModel
 from PyQt5 import QtGui
 
 class TimelineSubWindow(QMdiSubWindow):
+
     def __init__(self, table_name, column_names , db_connection):
         super().__init__()
         self.table_name = table_name
@@ -20,6 +21,12 @@ class TimelineSubWindow(QMdiSubWindow):
         self.table_model = None
         self.event_columns = ['message', 'event']
         self.event_column = 'message'
+        self.message = ''
+    
+    def get_rules(self, rules):
+        self.message = rules
+        self.show_ui()
+        # print(rules)
 
     def show_ui(self):
         # set title and geometry
@@ -27,8 +34,6 @@ class TimelineSubWindow(QMdiSubWindow):
         self.setWindowIcon(QtGui.QIcon('../assets/drone.png'))
         self.setWindowTitle(subwindow_title)
         self.setGeometry(60, 60, 600, 400)
-
-        print("ini db Connection ", self.db_connection)
 
         # construct the top level widget and layout
         widget = QWidget()
@@ -39,11 +44,17 @@ class TimelineSubWindow(QMdiSubWindow):
         self.table_model.setTable(self.table_name)
         self.table_model.select()
 
-        print("nambah ", self.table_model.hasFeature())
+        # data_record = self.table_model.record().value("message")
+        # print("record data ", data_record)
+        # while(self.table_model.canFetchMore()):
+        #     self.table_model.fetchMore()
+        # rowCount = self.table_model.rowCount()
+        # print("Total jumlah row ", rowCount)
 
-        # for i in self.table_model.record().value("message"):
-        #     print("data ", self.table_model.record(i).value("message"))
+        # for i in range(0, rowCount):
+        #     newRecord = self.table_model.record().fieldName(i)
 
+       
 
         # define search widget
         search_label = QLabel()
@@ -55,9 +66,11 @@ class TimelineSubWindow(QMdiSubWindow):
         table_label.setText('Timeline:')
         table_widget = QTableView()
         table_widget.setModel(self.table_model)
-        
+
+  
+        rules = self.message
         # Define custom delegate to mark entity, pyqt stuff
-        custom_delegate = CustomeDelegate()
+        custom_delegate = CustomeDelegate(rules)
         table_widget.setItemDelegate(custom_delegate)
 
         # Disable editing

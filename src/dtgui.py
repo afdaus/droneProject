@@ -19,11 +19,11 @@ from timeline_subwindow import TimelineSubWindow
 from merge_timeline_subwindow import MergeTimelineSubWindow
 from functools import partial
 import shutil
+import yaml
 
 class DtGui(QMainWindow):
 
     signal_receiver = pyqtSignal(str, list)
-
 
     def __init__(self):
         super().__init__()
@@ -31,6 +31,7 @@ class DtGui(QMainWindow):
         self.database = None
         self.case_name = ''
         self.case_directory = ''
+        self.rules_folder = ''
         self.timeline_columns = {}
         self.mdi = QMdiArea()
         self.setCentralWidget(self.mdi)
@@ -56,14 +57,20 @@ class DtGui(QMainWindow):
             with open('./timelines.json', 'w+') as outfile:
                 json.dump(timelines, outfile, indent=4)
         
-        print("ini timeline ", timelines)
+        # print("ini timeline ", timelines)
 
 
         return timelines
     
     def set_saved_rules(self):
         # folder path
-        dir_path = r'/home/daus/Documents/TA/dronetimeline/rules/'
+        # dir_path = r'/home/daus/Documents/TA/dronetimeline/rules/'
+        # dir_path = r'/Users/illank86/Documents/Project/droneProject/rules'
+        if(self.rules_folder == ''):
+            print("No rules found")
+            return
+
+        dir_path = self.rules_folder
 
         # list to store files
         res = []
@@ -71,9 +78,9 @@ class DtGui(QMainWindow):
         # Iterate directory
         for path in os.listdir(dir_path):
             # check if current path is a file
-            if os.path.isfile(os.path.join(dir_path, path)):
-                res.append(path)
-        print("ini list item", res)
+            if path.endswith(".yml"):
+                if os.path.isfile(os.path.join(dir_path, path)):
+                    res.append(path)
         return res
 
     def init_ui(self):
@@ -85,6 +92,7 @@ class DtGui(QMainWindow):
         # File menu
         file_menu = menubar.addMenu('&File')
         file_menu.addAction(self.newcase_action())
+        file_menu.addAction(self.rules_directory())
         file_menu.addAction(self.rule_action())
         file_menu.addAction(self.import_action())
         file_menu.addAction(self.exit_action())
@@ -101,8 +109,10 @@ class DtGui(QMainWindow):
         
         self.saved_timeline_action(saved_timeline_menu)
 
-        list_rules_menu = menubar.addMenu("&Rules")
-        self.saved_rules_action(list_rules_menu)
+        self.list_rules_menu = menubar.addMenu('&Rules')
+
+        # list_rules_menu = menubar.addMenu("&Rules")
+        # self.saved_rules_action(list_rules_menu)
 
 
         # show main window
@@ -128,6 +138,14 @@ class DtGui(QMainWindow):
         newcase_act.triggered.connect(self.open_directory_dialog)
 
         return newcase_act
+
+    def rules_directory(self):
+        newrules_act = QAction('&Select Rules Directory', self)
+        newrules_act.setShortcut('Ctrl+Y')
+        newrules_act.setStatusTip('Select rules directory')
+        newrules_act.triggered.connect(self.open_rules_directory_dialog)
+
+        return newrules_act
 
     def rule_action(self):
         rule_act = QAction('&Import Rule', self)
@@ -157,38 +175,59 @@ class DtGui(QMainWindow):
         return exit_act
 
     def open_rule_dialog(self):
-        
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        original, _ = QFileDialog.getOpenFileName(self, "Open file", "", "All Files (*)", options=options)
+        if self.rules_folder == '':
+            self.show_info_messagebox("Please select rules directory before importing a rule.")
+        else:  
+            options = QFileDialog.Options()
+            options |= QFileDialog.DontUseNativeDialog
+            original, _ = QFileDialog.getOpenFileName(self, "Open file", "", "*.yml", options=options)
 
-       
-        file_name = os.path.basename(original)
-
-        target = r'/home/daus/Documents/TA/dronetimeline/rules/' + file_name
         
-        if original:
-            # print("ini drirectory file ", original)
-            # print("test import yaml")
-            # print("ini file name ", file_name)
-            shutil.copyfile(original, target)
+            file_name = os.path.basename(original)
+
             
 
-            # insert timeline to database
-            # table_name = os.path.basename(directory)
-            # table_name = os.path.splitext(table_name)[0]
-
-            # # make sure table name is alphanumeric
-            # table_name = re.sub('[\W_]+', '', table_name)
-
-            # # insert csv file to database
-            # column_names = self.database.insert_csv(self, table_name, directory)
-
-            # # save timeline and its column names
-            # self.timeline_columns[table_name] = column_names
+            # target = r'/home/daus/Documents/TA/dronetimeline/rules/' + file_name
+            # target = r'/Users/illank86/Documents/Project/droneProject/rules' + file_name
+            target = self.rules_folder + '/' + file_name
             
-            # self.input_saved_timeline(table_name, column_names)
-            # self.timeline_subwindow_trigger(table_name, column_names)        
+            if original:
+                # print("ini drirectory file ", original)
+                # print("test import yaml")
+                # print("ini file name ", file_name)
+                try:
+                    shutil.copyfile(original, target)
+                except EnvironmentError:
+                    print("Error Happened")
+                else:
+                    
+                    # menubar = self.menuBar()
+                    # list_rules_menu = menubar.addMenu("&Rules")
+                    self.saved_rules = self.set_saved_rules()
+                    self.saved_rules_action(self.list_rules_menu)
+
+                    # for item in self.saved_rules:
+                    #     item = item.split(".")[0]
+                    #     savedrules = list_rules_menu.addAction(self.rules_action(item))
+                    message = f'{"File "}{file_name}{" copied"}'
+                    self.show_info_messagebox(message)
+                
+
+                # insert timeline to database
+                # table_name = os.path.basename(directory)
+                # table_name = os.path.splitext(table_name)[0]
+
+                # # make sure table name is alphanumeric
+                # table_name = re.sub('[\W_]+', '', table_name)
+
+                # # insert csv file to database
+                # column_names = self.database.insert_csv(self, table_name, directory)
+
+                # # save timeline and its column names
+                # self.timeline_columns[table_name] = column_names
+                
+                # self.input_saved_timeline(table_name, column_names)
+                # self.timeline_subwindow_trigger(table_name, column_names)        
 
 
 
@@ -214,6 +253,7 @@ class DtGui(QMainWindow):
     #         saved_timeline_menu.addAction(QAction('No Saved timelines', self))
 
     def saved_rules_action(self, list_rules_menu):
+        list_rules_menu.clear()
         if(self.saved_rules):
             for item in self.saved_rules:
                 item = item.split(".")[0]
@@ -229,11 +269,22 @@ class DtGui(QMainWindow):
         return rules_act
 
     def read_yml_file(self, item):
-        if(item):
-            rules = QtDatabase(self.newDirectory)
-            rules.read_yml_rules(item)
-        else:
-            print("No YML File Found")
+        path = self.rules_folder + '/' + item + '.yml'
+        with open(path, "r") as stream:
+            try:
+                keywords = yaml.safe_load(stream)
+                keywords = keywords["detection"]["keywords"]
+
+                if hasattr(self, "subwindow"):
+                    self.subwindow.get_rules(keywords)
+                else:
+                    self.show_info_messagebox("Import a timeline first or open saved timeline")
+                    
+            except yaml.YAMLError as exc:
+                print(exc)
+
+       
+
 
     def saved_timeline_action(self, saved_timeline_menu):
         if(self.saved_timeline):
@@ -285,10 +336,20 @@ class DtGui(QMainWindow):
             message = f'{"Case directory is selected: "}{directory}'
             self.show_info_messagebox(message)
 
+    def open_rules_directory_dialog(self):
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory")
+        self.rules_folder = directory
+        self.saved_rules = self.set_saved_rules()
+        self.saved_rules_action(self.list_rules_menu)
+        message = f'{"Rules directory is selected: "}{directory}'
+        self.show_info_messagebox(message)
+
     def open_file_dialog(self):
         if self.case_name == '':
             self.show_info_messagebox("Please select case directory before importing a timeline.")
-
+        
+        elif self.rules_folder == "":
+            self.show_info_messagebox("Please select rules directory before importing a timeline.")
         else:
             options = QFileDialog.Options()
             options |= QFileDialog.DontUseNativeDialog
@@ -341,17 +402,22 @@ class DtGui(QMainWindow):
             
             
     def timeline_subwindow_trigger(self, table_name, column_names):
-        # define timeline sub window
-        subwindow = TimelineSubWindow(table_name,column_names, self.database.connection)
 
-        
-        # show timeline in an MDI window
-        self.mdi.addSubWindow(subwindow)
-        subwindow.show_ui()
+        if self.rules_folder == '':
+            self.show_info_messagebox("Please select rules directory before open a timeline")
+        else:
 
-        # Notification
-        message = f'{"Timeline is imported successfully: "}{table_name}{"."}'
-        self.show_info_messagebox(message)
+            # define timeline sub window
+            self.subwindow = TimelineSubWindow(table_name,column_names, self.database.connection)
+
+            
+            # # show timeline in an MDI window
+            self.mdi.addSubWindow(self.subwindow)
+            self.subwindow.show_ui()
+
+            # # Notification
+            message = f'{"Timeline is imported successfully: "}{table_name}{"."}'
+            self.show_info_messagebox(message)
 
 
     def merge_window_trigger(self):

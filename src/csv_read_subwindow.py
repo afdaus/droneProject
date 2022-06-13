@@ -49,7 +49,7 @@ class CSVReadSubWindow(QMdiSubWindow):
             for i in range(0, last_inserted_id): 
                 next(csv_reader)
                 self.completed += 1/n
-                self.progress.setValue(self.completed*100) 
+            # self.progress.setValue(60) 
 
 
             for row in csv_reader:
@@ -59,7 +59,7 @@ class CSVReadSubWindow(QMdiSubWindow):
                 datas.append(row)
 
                 self.completed += 1/n
-                self.progress.setValue(self.completed*100)
+            # self.progress.setValue(70)
 
 
         column_string = ''
@@ -72,7 +72,7 @@ class CSVReadSubWindow(QMdiSubWindow):
                 comma = ''
             column_string += f"{column_name}{comma}"
         column_string = f"{'('}{column_string}{')'}{' VALUES '}"
-        self.progress.setValue(95)
+        # self.progress.setValue(95)
         
         # values
         comma = ', '
@@ -94,7 +94,7 @@ class CSVReadSubWindow(QMdiSubWindow):
         con.commit()    
         
         print("finished inserting from csv")
-        self.progress.setValue(100)
+        # self.progress.setValue(100)
 
         # cur.execute(query_getData)
         # column_ids = cur.fetchall()
